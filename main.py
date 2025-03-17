@@ -33,17 +33,15 @@ try:
     for playlist_name, tracks in playlist_tracks.items():
         # create playlists
         playlist_id = existing_playlists.get(playlist_name)
+
         if (playlist_id):
             logger.info(f"Playlist {playlist_name} already exists!") # URL: {playlist_url}")
         else: 
             new_playlist = youtube.create_playlist(playlist_name)
-            if not new_playlist or not new_playlist.get('id'):
+            playlist_id = new_playlist.get('id')
+            if not new_playlist or not playlist_id:
                 logger.error(f"Failed to create playlist {playlist_name}")
                 continue
-            logger.info("Created playlist", playlist_name)
-            new_id = new_playlist.get('id')
-            existing_playlists[new_playlist['snippet']['title']] = new_id
-
         # add tracks
         logger.info(f"Adding {len(tracks)} tracks to ", playlist_name)
         existing_item_ids = youtube.get_playlist_items(playlist_id)
@@ -68,7 +66,14 @@ try:
                 logger.info(f'{track} successfully added.')
 except Exception as e:
     if 'quotaExceeded' in str(e):
-        logger.error("Quota exceeded, stopping the app.")
+        logger.error("YouTube Quota exceeded, stopping the app.")
         # quota resets at 4.30pm ADL time
+    else:
+        logger.error('An unknown error occurred:', e)
 
-# TODO reduce requests to avoid exceeding youtube api query quota
+# # TODO reduce requests to avoid exceeding youtube api query quota
+
+youtube_query_count = youtube.get_query_count()
+spotify_query_count = spotify.get_query_count()
+print(f"Total spotify queries: {youtube_query_count}")
+print(f"Total youtube queries: {youtube_query_count}")

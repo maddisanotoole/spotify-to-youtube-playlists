@@ -15,6 +15,7 @@ SCOPES = ["https://www.googleapis.com/auth/youtube.readonly", "https://www.googl
 TOKEN_FILE = "token.json" 
 class YoutubeAPI: 
     youtube = None
+    query_count = 0
 
     def __init__(self):
         os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1" # local only
@@ -63,6 +64,7 @@ class YoutubeAPI:
                 q=search_query
             )
             response = request.execute()
+            self.query_count += 1
             return response
         except googleapiclient.errors.HttpError as e:
             if e.resp.status == 403 and 'quotaExceeded' in e.content.decode():
@@ -97,6 +99,7 @@ class YoutubeAPI:
                     pageToken= next_page_token
                 )
                 response = request.execute()
+                self.query_count += 1
             except googleapiclient.errors.HttpError as e:
                 if e.resp.status == 403 and 'quotaExceeded' in e.content.decode():
                     logger.error("Quota exceeded, stopping the app.")
@@ -128,6 +131,7 @@ class YoutubeAPI:
                     pageToken=next_page_token
                 )
                 response = request.execute()
+                self.query_count += 1
             except googleapiclient.errors.HttpError as e:
                 if e.resp.status == 403 and 'quotaExceeded' in e.content.decode():
                     raise e
@@ -158,6 +162,7 @@ class YoutubeAPI:
                 }
             )
             response = request.execute()
+            self.query_count += 1
             return response
         except googleapiclient.errors.HttpError as e:
             if e.resp.status == 403 and 'quotaExceeded' in e.content.decode():
@@ -182,6 +187,7 @@ class YoutubeAPI:
                 }
             )
             response = request.execute()
+            self.query_count += 1
             return response
         except googleapiclient.errors.HttpError as e:
             if e.resp.status == 403 and 'quotaExceeded' in e.content.decode():
@@ -190,3 +196,6 @@ class YoutubeAPI:
         except Exception as e:
             logger.error(f"Error during add_item_to_playlist: {e}")
         return None
+    
+    def get_query_count(self):
+        return self.query_count
