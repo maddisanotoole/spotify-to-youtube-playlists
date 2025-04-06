@@ -21,9 +21,9 @@ pip install -r requirements.txt
 3. Set the Redirect URI to `http://localhost:8888/callback`
 4. Add the Client ID, Client Secret, and Redirect URI to your environment variables:
    ```sh
-   export SPOTIPY_CLIENT_ID='your_client_id'
-   export SPOTIPY_CLIENT_SECRET='your_client_secret'
-   export SPOTIPY_REDIRECT_URI='http://localhost:8888/callback'
+   export SPOTIFY_CLIENT_ID='your_client_id'
+   export SPOTIFY_CLIENT_SECRET='your_client_secret'
+   export SPOTIFY_REDIRECT_URI='http://localhost:8888/callback'
    ```
 
 ### Setup Google Connection
