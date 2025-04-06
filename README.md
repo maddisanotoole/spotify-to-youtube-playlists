@@ -4,6 +4,8 @@ Convert Spotify playlists to Youtube music video playlists
 
 ## Overview
 
+Convert Spotify playlists into Youtube playlists. The converter searches Youtube for the first title and artist match, preferring music videos. 
+
 ## How to run
 
 ### Install Dependencies
@@ -41,3 +43,19 @@ pip install -r requirements.txt
 ```sh
 ./main.py
 ```
+If it's your first time running, you will be prompted to login to Spotify and Youtube.
+
+You will be presented with a numbered list of playlists:
+
+![image](https://github.com/user-attachments/assets/fee3a76e-ad20-474d-b39c-b4a9391abc55)
+
+Choose a playlist to download by entering the corresponding number:
+
+![image](https://github.com/user-attachments/assets/d6d2bf18-8ad9-4408-8ca3-5c1efdafe0ef)
+
+Observe the magic:
+
+![image](https://github.com/user-attachments/assets/d49e192a-121f-470b-8dc6-a6be72749310)
+
+> [!NOTE]  
+> Due to Youtube API's restrictive query quota (especially for search queries), I've added caching for query results.
