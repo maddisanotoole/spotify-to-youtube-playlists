@@ -58,4 +58,4 @@ Observe the magic:
 ![image](https://github.com/user-attachments/assets/d49e192a-121f-470b-8dc6-a6be72749310)
 
 > [!NOTE]  
-> Due to Youtube API's restrictive query quota (especially for search queries), I've added caching for query results.
+> Due to Youtube API's restrictive query quota (especially for search queries), I've added caching for query results. So if you have large playlists and hit the quota, you can try again the next day (or on another youtube api project) and it will only search for the missing songs. 
