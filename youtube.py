@@ -1,4 +1,6 @@
+from enum import Enum
 import os
+import json
 from venv import logger
 from dotenv import load_dotenv
 import google_auth_oauthlib.flow
@@ -6,16 +8,25 @@ import googleapiclient.discovery
 import googleapiclient.errors
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
-from googleapiclient.http import BatchHttpRequest
-# TODO implement batch requests 
 
 load_dotenv()
 
 SCOPES = ["https://www.googleapis.com/auth/youtube.readonly", "https://www.googleapis.com/auth/youtube.force-ssl"]
-TOKEN_FILE = "token.json" 
+TOKEN_FILE = "token.json"
+CACHE_FILE = "caches/youtube_cache.json"
+
+# https://developers.google.com/youtube/v3/determine_quota_cost
+class QuotaCost(Enum):
+    SEARCH = 100
+    PLAYLISTS_LIST = 1  # playlist items have same quota cost as playlist
+    PLAYLISTS_INSERT = 50
+    VIDEO_LIST = 1
+
+
 class YoutubeAPI: 
     youtube = None
-    query_count = 0
+    query_cost = 0
+    cache = {}
 
     def __init__(self):
         os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1" # local only
@@ -56,7 +67,28 @@ class YoutubeAPI:
         self.youtube = googleapiclient.discovery.build(
             API_SERVICE_NAME, API_VERSION, credentials=credentials)
 
+        # Load cache
+        if os.path.exists(CACHE_FILE):
+            with open(CACHE_FILE, 'r') as f:
+                self.cache = json.load(f)
+
+    def save_cache(self):
+        with open(CACHE_FILE, 'w') as f:
+            json.dump(self.cache, f)
+
+    def delete_cache(self):
+        if os.path.exists(CACHE_FILE):
+            os.remove(CACHE_FILE)
+            self.cache = {}
+            logger.info("Cache deleted successfully.")
+        else:
+            logger.warning("Cache file does not exist.")
+
+
     def search(self, search_query) : 
+        if search_query in self.cache:
+            return self.cache[search_query]
+
         try:
             request = self.youtube.search().list(
                 part="snippet",
@@ -64,7 +96,9 @@ class YoutubeAPI:
                 q=search_query
             )
             response = request.execute()
-            self.query_count += 1
+            self.query_cost += QuotaCost.SEARCH.value
+            self.cache[search_query] = response
+            self.save_cache()
             return response
         except googleapiclient.errors.HttpError as e:
             if e.resp.status == 403 and 'quotaExceeded' in e.content.decode():
@@ -84,7 +118,7 @@ class YoutubeAPI:
             return None
         # TODO - check if result is valid
         video = items[0]
-        return video['id']['videoId']
+        return video['id'].get('videoId')
     
     def get_playlists(self): 
         playlist_ids = {}
@@ -99,16 +133,15 @@ class YoutubeAPI:
                     pageToken= next_page_token
                 )
                 response = request.execute()
-                self.query_count += 1
+                self.query_cost += QuotaCost.PLAYLISTS_LIST.value
             except googleapiclient.errors.HttpError as e:
                 if e.resp.status == 403 and 'quotaExceeded' in e.content.decode():
-                    logger.error("Quota exceeded, stopping the app.")
-                    exit(1)
+                    raise e
                 logger.error(f"Error during get_playlists: {e}")
-                break
+                exit(1)
             except Exception as e:
                 logger.error(f"Error during get_playlists: {e}")
-                break
+                exit(1)
 
             for item in response['items']:
                 playlist_name = item['snippet']['title']
@@ -119,6 +152,9 @@ class YoutubeAPI:
         return playlist_ids
     
     def get_playlist_items(self, playlist_id):
+        if playlist_id in self.cache:
+            return self.cache[playlist_id]
+
         item_ids = []
         next_page_token = None
 
@@ -131,7 +167,7 @@ class YoutubeAPI:
                     pageToken=next_page_token
                 )
                 response = request.execute()
-                self.query_count += 1
+                self.query_cost += QuotaCost.PLAYLISTS_LIST.value
             except googleapiclient.errors.HttpError as e:
                 if e.resp.status == 403 and 'quotaExceeded' in e.content.decode():
                     raise e
@@ -149,6 +185,8 @@ class YoutubeAPI:
             if not next_page_token:
                 break
 
+        self.cache[playlist_id] = item_ids
+        self.save_cache()
         return item_ids
     
     def create_playlist(self, playlist_name):
@@ -162,7 +200,7 @@ class YoutubeAPI:
                 }
             )
             response = request.execute()
-            self.query_count += 1
+            self.query_cost += QuotaCost.PLAYLISTS_INSERT.value
             return response
         except googleapiclient.errors.HttpError as e:
             if e.resp.status == 403 and 'quotaExceeded' in e.content.decode():
@@ -187,7 +225,7 @@ class YoutubeAPI:
                 }
             )
             response = request.execute()
-            self.query_count += 1
+            self.query_cost += QuotaCost.PLAYLISTS_INSERT.value
             return response
         except googleapiclient.errors.HttpError as e:
             if e.resp.status == 403 and 'quotaExceeded' in e.content.decode():
@@ -196,6 +234,6 @@ class YoutubeAPI:
         except Exception as e:
             logger.error(f"Error during add_item_to_playlist: {e}")
         return None
-    
-    def get_query_count(self):
-        return self.query_count
+
+    def get_query_cost(self):
+        return self.query_cost
