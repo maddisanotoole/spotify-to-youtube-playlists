@@ -31,12 +31,11 @@ pip install -r requirements.txt
 1. Create a Developer Account in Google Cloud Console https://console.cloud.google.com/
 2. Create a new Project
 3. Enable the YouTube Data API v3 for your project 'Apis & Services' '+ Enable APIs and Services' -> Enable YouTube Data API v3
-4. IN 'APIs & Services' => 'Create credentials'
-5. In 'APIs & Services' -> 'Credentials' -> "Configure Consent Screen". You will be prompted to create Google Auth Platform - > Create
-6. Google Auth Platform -> OAuth Overview -> Create OAUTH client
+4. In 'APIs & Services' -> 'Credentials' -> "Configure Consent Screen". You will be prompted to create Google Auth Platform - > Create
+5. Google Auth Platform -> OAuth Overview -> Create OAUTH client
    Select 'Web Application', in Authorized redirect URIs put "http://localhost:8888/"
-7. In Google Auth Platform -> Audience --> add the users you want to use in 'Test users'
-8. Set the path to the JSON file in your environment variables
+6. In Google Auth Platform -> Audience --> add the users you want to use in 'Test users'
+7. Set the path to the JSON file in your environment variables
 
 ### Run project
 
