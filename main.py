@@ -21,11 +21,16 @@ def get_playlist_dicts():
 
 playlist_tracks = get_playlist_dicts()
 
+youtube = YoutubeAPI()
+existing_playlists = youtube.get_playlists()
+existing_playlists_names = existing_playlists.keys()
+
 # Display playlists and prompt user for selection
 print("Available Spotify Playlists:")
 playlist_names = list(playlist_tracks.keys())
 for idx, name in enumerate(playlist_names, start=1):
-    print(f"{idx}. {name}")
+    status = "(Added)" if name in existing_playlists_names else ""
+    print(f"{idx}. {name} {status}")
 print("0. Exit")
 
 while True:
@@ -43,10 +48,7 @@ while True:
 selected_playlist_name = playlist_names[selected_index]
 selected_tracks = playlist_tracks[selected_playlist_name]
 
-youtube = YoutubeAPI()
 
-existing_playlists = youtube.get_playlists()
-existing_playlists_names = existing_playlists.keys()
 video_id_cache = {}
 try:
     # create playlist
@@ -87,8 +89,6 @@ except Exception as e:
         # quota resets at 4.30pm ADL time
     else:
         logger.error('An unknown error occurred:', e)
-
-# # TODO reduce requests to avoid exceeding youtube api query quota
 
 youtube_query_cost = youtube.get_query_cost()
 spotify_query_count = spotify.get_query_count()
